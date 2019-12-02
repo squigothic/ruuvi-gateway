@@ -1,0 +1,4 @@
+# file for storing config
+config.py
+*.log
+__pycache__/

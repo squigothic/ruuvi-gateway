@@ -3,10 +3,11 @@ import boto3
 import json
 import pymysql
 from ruuvitag_sensor.ruuvitag import RuuviTag
+from config import taglist, bucket, user, passwd, db, port
 
 s3 = boto3.resource('s3')
 
-obj = s3.Object('ruuvitag-ids', 'taglist.json')
+obj = s3.Object(bucket, taglist)
 
 body = obj.get()['Body'].read()
 
@@ -26,10 +27,10 @@ sql = '''INSERT INTO observations (tagname, date, time, temperature, pressure, r
 
 db = pymysql.connect(
   host = "127.0.0.1",
-	user =  "raspi",
-	passwd =  "V%I$0mPhqNIZzo2",
-	db =  "observations",
-	port = 9000)
+	user =  user,
+	passwd =  passwd,
+	db =  db,
+	port = port)
 
 with db:
   curs=db.cursor()
@@ -37,9 +38,3 @@ with db:
   db.commit()
   curs.close()
   db.close()
-
-
-
-
-
-
