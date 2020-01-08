@@ -1,42 +1,52 @@
 #!/usr/bin/env python3
+import time
 import boto3
 import json
 import pymysql
-from ruuvitag_sensor.ruuvitag import RuuviTag
-from config import taglist, bucket, user, passwd, db, port
+import simplejson as json
+from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
+from config import taglist2, bucket, user, passwd, db, port
 
 s3 = boto3.resource('s3')
-
-obj = s3.Object(bucket, taglist)
-
+obj = s3.Object(bucket, taglist2)
 body = obj.get()['Body'].read()
 
-tags = json.loads(body)
+taglist = json.loads(body)
+
+tags = []
+
+for tag in taglist['tags']:
+  tags.append(tag['mac'])
+
+timeout = 4
 
 print(tags)
 
-measurements = []
+measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
 
-for tag in tags:
-    sensor = RuuviTag(tags[tag])
-    state = sensor.update()
-    #print('state: ' + str(state))
-    datas = (tag, state['temperature'], round(state['pressure']), round(state['humidity']))
-    measurements.append(datas)
+for tag in taglist['tags']:
+   measurements[tag['mac']]['name'] = tag['name']
+   measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
 
-sql = '''INSERT INTO observations (tagname, date, time, temperature, pressure, relativehumidity, timestamp)
-  VALUES(%s, CURRENT_DATE(), CURRENT_TIME(), %s, %s, %s, UNIX_TIMESTAMP())'''
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('RuuviMeasurements')
 
-db = pymysql.connect(
-  host = "127.0.0.1",
-	user =  user,
-	passwd =  passwd,
-	db =  db,
-	port = port)
+with table.batch_writer() as batch:
+  for measurement in measurements.values():
+    timestamp_tag = str(int(time.time()))+"_"+taglist['user'][:3]+measurement['name'][-1]
+    data = {
+      'temperature': measurement['temperature'],
+      'humidity': measurement['humidity'],
+      'pressure' : int(measurement['pressure']),
+      'timestamp': int(time.time()),
+      'friendlyname': measurement['friendlyname'],
+    }
+    batch.put_item(
+      Item={
+        'Person': taglist['user'],
+        'Timestamp_Tagname': timestamp_tag,
+        'Data': json.dumps(data, ensure_ascii=False, encoding="utf8")
+      }
+    )
 
-with db:
-  curs=db.cursor()
-  curs.executemany(sql, measurements)
-  db.commit()
-  curs.close()
-  db.close()
+print('Read and written!')
