@@ -13,6 +13,8 @@ body = obj.get()['Body'].read()
 
 tags = json.loads(body)
 
+print(tags)
+
 measurements = []
 
 for tag in tags:
