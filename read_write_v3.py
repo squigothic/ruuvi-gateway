@@ -20,8 +20,6 @@ for tag in taglist['tags']:
 
 timeout = 4
 
-print(tags)
-
 measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
 
 for tag in taglist['tags']:
@@ -49,4 +47,4 @@ with table.batch_writer() as batch:
       }
     )
 
-print('Read and written!')
+print(f'Last successfull update at {str(time.localtime())}')
