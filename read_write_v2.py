@@ -3,9 +3,9 @@ import boto3
 import json
 import pymysql
 from ruuvitag_sensor.ruuvitag import RuuviTag
-from config import taglist, bucket, user, passwd, db, port
+from config import taglist, bucket, user, passwd, db, port, ACCESS_ID, ACCESS_KEY
 
-s3 = boto3.resource('s3')
+s3 = boto3.resource('s3', aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
 
 obj = s3.Object(bucket, taglist)
 
