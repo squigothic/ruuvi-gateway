@@ -47,4 +47,4 @@ with table.batch_writer() as batch:
       }
     )
 
-print(f'Last successfull update at {str(time.localtime())}')
+print(f'Last successfull update at {str(time.ctime())}')
