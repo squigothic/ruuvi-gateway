@@ -5,11 +5,11 @@ import json
 import pymysql
 import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
-from config import taglist2, bucket, user, passwd, db, port, ACCESS_ID, ACCESS_KEY
+from config import taglist2, bucket, user, passwd, db, port, ACCESS_ID, ACCESS_KEY, timeout
 
-session = boto3.Session(profile_name='ruuvi')
+#session = boto3.Session(profile_name='ruuvi')
 
-s3 = session.resource('s3')
+s3 = boto3.resource('s3')
 obj = s3.Object(bucket, taglist2)
 body = obj.get()['Body'].read()
 
@@ -19,8 +19,6 @@ tags = []
 
 for tag in taglist['tags']:
   tags.append(tag['mac'])
-
-timeout = 4
 
 measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
 
