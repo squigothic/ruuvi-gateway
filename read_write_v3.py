@@ -25,7 +25,8 @@ for tag in taglist['tags']:
    measurements[tag['mac']]['name'] = tag['name']
    measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
 
-dynamodb = boto3.resource('dynamodb', aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
+dynamodb = boto3.resource('dynamodb')
+
 table = dynamodb.Table('RuuviMeasurements')
 
 with table.batch_writer() as batch:
