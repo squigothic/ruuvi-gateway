@@ -5,10 +5,11 @@ import json
 import pymysql
 import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
-from config import taglist2, bucket, user, passwd, db, port
+from config import taglist, bucket, user, ACCESS_ID, ACCESS_KEY, timeout
 
+#3 = boto3.resource('s3', aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
 s3 = boto3.resource('s3')
-obj = s3.Object(bucket, taglist2)
+obj = s3.Object(bucket, taglist)
 body = obj.get()['Body'].read()
 
 taglist = json.loads(body)
@@ -18,15 +19,13 @@ tags = []
 for tag in taglist['tags']:
   tags.append(tag['mac'])
 
-timeout = 4
-
 measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
 
 for tag in taglist['tags']:
    measurements[tag['mac']]['name'] = tag['name']
    measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
 
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb', aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
 table = dynamodb.Table('RuuviMeasurements')
 
 with table.batch_writer() as batch:
