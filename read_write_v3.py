@@ -7,7 +7,7 @@ import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
 from config import taglist, bucket, user, ACCESS_ID, ACCESS_KEY, timeout
 
-#3 = boto3.resource('s3', aws_access_key_id=ACCESS_ID, aws_secret_access_key=ACCESS_KEY)
+
 s3 = boto3.resource('s3')
 obj = s3.Object(bucket, taglist)
 body = obj.get()['Body'].read()
@@ -46,4 +46,4 @@ with table.batch_writer() as batch:
       }
     )
 
-print(f'Last successfull update at {str(time.localtime())}')
+print(f'Last successfull update at {str(time.ctime())}')
