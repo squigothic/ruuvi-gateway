@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import time
+from datetime import datetime
 import boto3
 import json
 import pymysql
@@ -29,6 +30,8 @@ dynamodb = boto3.resource('dynamodb')
 
 table = dynamodb.Table('RuuviMeasurements')
 
+today = datetime.now()
+
 with table.batch_writer() as batch:
   for measurement in measurements.values():
     timestamp_tag = str(int(time.time()))+"_"+taglist['user'][:3]+measurement['name'][-1]
@@ -43,7 +46,8 @@ with table.batch_writer() as batch:
       Item={
         'Person': taglist['user'],
         'Timestamp_Tagname': timestamp_tag,
-        'Data': json.dumps(data, ensure_ascii=False, encoding="utf8")
+        'Data': json.dumps(data, ensure_ascii=False, encoding="utf8"),
+        'MeasurementDate': today.strftime("%d-%m-%Y")
       }
     )
 
