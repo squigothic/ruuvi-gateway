@@ -47,7 +47,7 @@ with table.batch_writer() as batch:
         'Person': taglist['user'],
         'Timestamp_Tagname': timestamp_tag,
         'Data': json.dumps(data, ensure_ascii=False, encoding="utf8"),
-        'MeasurementDate': today.strftime("%d-%m-%Y")
+        'MeasurementDate': today.strftime("%Y-%m-%d")
       }
     )
 
