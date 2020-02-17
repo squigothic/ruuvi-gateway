@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 import boto3
 import json
-import pymysql
 import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
 from config import taglist, bucket, user, ACCESS_ID, ACCESS_KEY, timeout
