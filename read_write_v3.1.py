@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import time
+import sys
 from datetime import datetime
 import boto3
 import json
 import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
-from config import taglist, bucket, user, ACCESS_ID, ACCESS_KEY, timeout
+from config import taglist, bucket, user, timeout
 
 
 s3 = boto3.resource('s3')
@@ -24,7 +25,7 @@ for tag in taglist['tags']:
 
 dynamodb = boto3.resource('dynamodb')
 
-table = dynamodb.Table('RuuviMeasurements')
+table = dynamodb.Table('StagingRuuviMeasurements')
 
 today = datetime.now()
 
@@ -50,4 +51,4 @@ try:
 
   print(f'Last successfull update at {str(time.ctime())}')
 except:
-  print(f'Update failed at {str(time.ctime())}')
+  print(f'Failed to update at {str(time.ctime())}, reason {sys.exc_info()[0]}')
