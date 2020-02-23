@@ -14,9 +14,13 @@ body = obj.get()['Body'].read()
 
 taglist = json.loads(body)
 
-tags = []
+measurements = RuuviTagSensor.get_data_for_sensors([], timeout)
 
-measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
+unreachableTags = []
+
+for tag in taglist['tags']:
+  if tag['mac'] not in measurements.keys():
+    unreachableTags.append(tag['mac'])
 
 for result in measurements:
   for tag in taglist['tags']:
@@ -50,6 +54,15 @@ try:
         }
       )
 
-  print(f'Last successfull update at {str(time.ctime())}')
+  def checkForUnreachables():
+    if len(unreachableTags) > 0:
+      missingTags = ''
+      for i in unreachableTags:
+        missingTags += i + ' '
+      return 'Tags not found: ' + missingTags + '.'
+    else:
+      return ''
+
+  print(f'{str(time.ctime())} Scan done, found {len(measurements)} tags. {checkForUnreachables()}')
 except:
   print(f'Update failed at {str(time.ctime())}')
