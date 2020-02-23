@@ -18,10 +18,6 @@ tags = []
 
 measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
 
-# for tag in taglist['tags']:
-#    measurements[tag['mac']]['name'] = tag['name']
-#    measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
-
 for result in measurements:
   for tag in taglist['tags']:
     if tag['mac'] == result:
