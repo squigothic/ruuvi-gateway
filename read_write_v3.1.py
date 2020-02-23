@@ -10,7 +10,7 @@ from config import taglist, bucket, user, timeout
 
 
 s3 = boto3.resource('s3')
-obj = s3.Object(bucket, taglist)
+obj = s3.Object(bucket, 'taglist-testing.json')
 body = obj.get()['Body'].read()
 
 taglist = json.loads(body)
@@ -19,9 +19,19 @@ tags = []
 
 measurements = RuuviTagSensor.get_data_for_sensors(tags, timeout)
 
-for tag in taglist['tags']:
-   measurements[tag['mac']]['name'] = tag['name']
-   measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
+# print('measurements', measurements.items())
+# print('**********')
+# print('taglist', taglist)
+
+for result in measurements:
+  # print('mittauksen mac ', result)
+  # print(measurements[result])
+  for tag in taglist['tags']:
+    if tag['mac'] == result:
+      # print('taglistin name ', tag['name'])
+      # print('taglistin mac ', tag['mac'])
+      measurements[tag['mac']]['name'] = tag['name']
+      measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
 
 dynamodb = boto3.resource('dynamodb')
 
