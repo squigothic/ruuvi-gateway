@@ -5,7 +5,7 @@ import boto3
 import json
 import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
-from config import taglist, bucket, user, ACCESS_ID, ACCESS_KEY, timeout
+from config import taglist, bucket, dynamodbtable, user, ACCESS_ID, ACCESS_KEY, timeout
 
 
 s3 = boto3.resource('s3')
@@ -30,7 +30,7 @@ for result in measurements:
 
 dynamodb = boto3.resource('dynamodb')
 
-table = dynamodb.Table('RuuviMeasurements')
+table = dynamodb.Table(dynamodbtable)
 
 today = datetime.now()
 
