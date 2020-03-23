@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
 import time
+import sys
 from datetime import datetime
 import boto3
-import json
+import requests
 import simplejson as json
 from ruuvitag_sensor.ruuvitag import RuuviTag, RuuviTagSensor
-from config import taglist, bucket, dynamodbtable, user, ACCESS_ID, ACCESS_KEY, timeout
+from config import taglist, bucket, user, timeout, username, password, API_URL
+
+URL = API_URL+'/login'
+credentials = {
+    'username': username,
+    'password': password
+}
+r = requests.post(URL, json.dumps(credentials))
+
+response = json.loads(r.content)
 
 
 s3 = boto3.resource('s3')
@@ -19,50 +29,53 @@ measurements = RuuviTagSensor.get_data_for_sensors([], timeout)
 unreachableTags = []
 
 for tag in taglist['tags']:
-  if tag['mac'] not in measurements.keys():
-    unreachableTags.append(tag['mac'])
+    if tag['mac'] not in measurements.keys():
+        unreachableTags.append(tag['mac'])
 
 for result in measurements:
-  for tag in taglist['tags']:
-    if tag['mac'] == result:
-      measurements[tag['mac']]['name'] = tag['name']
-      measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
+    for tag in taglist['tags']:
+        if tag['mac'] == result:
+            measurements[tag['mac']]['name'] = tag['name']
+            measurements[tag['mac']]['friendlyname'] = tag['friendlyname']
 
-dynamodb = boto3.resource('dynamodb')
-
-table = dynamodb.Table(dynamodbtable)
 
 today = datetime.now()
 
 try:
-  with table.batch_writer() as batch:
+    sendables = []
+
     for measurement in measurements.values():
-      timestamp_tag = str(int(time.time()))+"_"+taglist['user'][:3]+measurement['name'][-1]
-      data = {
-        'temperature': measurement['temperature'],
-        'humidity': measurement['humidity'],
-        'pressure' : int(measurement['pressure']),
-        'timestamp': int(time.time()),
-        'friendlyname': measurement['friendlyname'],
-      }
-      batch.put_item(
-        Item={
-          'Person': taglist['user'],
-          'Timestamp_Tagname': timestamp_tag,
-          'Data': json.dumps(data, ensure_ascii=False, encoding="utf8"),
-          'MeasurementDate': today.strftime("%Y-%m-%d")
+        data = {
+            'temperature': measurement['temperature'],
+            'humidity': measurement['humidity'],
+            'pressure': int(measurement['pressure']),
+            'timestamp': int(time.time()),
+            'friendlyname': measurement['friendlyname']
         }
-      )
+        sendable = {
+            'user': taglist['user'],
+            'timestamp_tag': str(int(time.time()))+"_"+taglist['user'][:3]+measurement['name'][-1],
+            'data': json.dumps(data, ensure_ascii=False, encoding="utf8"),
+            'dateOfMeasurement': today.strftime("%Y-%m-%d")
+        }
+        sendables.append(sendable)
 
-  def checkForUnreachables():
-    if len(unreachableTags) > 0:
-      missingTags = ''
-      for i in unreachableTags:
-        missingTags += i + ' '
-      return 'Tags not found: ' + missingTags + '.'
-    else:
-      return ''
+    URL = API_URL+'/measurements/'+username+'/add'
+    r = requests.post(URL, json.dumps(sendables, encoding="utf8"), headers={
+        'Authorization': 'Bearer '+response['token'], 'Content-Type': 'application/json;charset=UTF-8'}
+    )
+    print(r)
 
-  print(f'{str(time.ctime())} Scan done, found {len(measurements)} tags. {checkForUnreachables()}')
+    def checkForUnreachables():
+        if len(unreachableTags) > 0:
+            missingTags = ''
+            for i in unreachableTags:
+                missingTags += i + ' '
+            return 'Tags not found: ' + missingTags + '.'
+        else:
+            return ''
+
+    print(f'{str(time.ctime())} Scan done, found {len(measurements)}. {checkForUnreachables()}')
 except:
-  print(f'Update failed at {str(time.ctime())}')
+    print(
+        f'Failed to update at {str(time.ctime())}, reason {sys.exc_info()[0]}')
