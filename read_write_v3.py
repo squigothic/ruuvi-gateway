@@ -55,7 +55,7 @@ try:
         sendable = {
             'user': taglist['user'],
             'timestamp_tag': str(int(time.time()))+"_"+taglist['user'][:3]+measurement['name'][-1],
-            'data': json.dumps(data, ensure_ascii=False, encoding="utf8"),
+            'data': data,
             'dateOfMeasurement': today.strftime("%Y-%m-%d")
         }
         sendables.append(sendable)
